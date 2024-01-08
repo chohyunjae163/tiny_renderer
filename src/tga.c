@@ -1,30 +1,35 @@
- //TGA spec: https://en.wikipedia.org/wiki/Truevision_TGA
-//TGA importer
-
 #include <stdio.h>
 #include <assert.h>
 #include <stdint.h>
 
 #define HEADER_SIZE 18
 
-struct TGAColorMapSpec {
+#pragma pack(1)
+struct ColorMapSpec {
   uint16_t first_entry_idx;
   uint16_t color_map_length;
-  uint16_t color_map_entry_size;
+  uint8_t color_map_entry_size;
 };
 
-struct TGAImageSpec {
-  //TODO: implement
+
+
+struct ImageSpec {
+  uint16_t x;
+  uint16_t y;
+  uint16_t width;
+  uint16_t height;
+  uint8_t pixel_depth; // bits per pixel
+  uint8_t descriptor; // bits 3-0 give the alpha channel depth, bits 5-4 give pixel ordering
 };
 
-struct TGAHeader {
+struct Header {
   uint8_t id_length;
   uint8_t color_map_type;
   uint8_t image_type;
-  struct TGAColorMapSpec color_map_spec;
-  struct TGAImageSpec image_spec;
+  struct ColorMapSpec color_map_spec;
+  struct ImageSpec image_spec;
 };
-
+#pragma pack()
 struct TGAImage {
   uint8_t dummy;
 };
@@ -49,10 +54,12 @@ struct TGAImage loadTGA(const char* filename){
    * image specificatino 10 bytes
    */
   //start reading header
-  uint8_t header_data[HEADER_SIZE] = {0};
-  fread(header_data,sizeof(uint8_t),HEADER_SIZE,fptr);
-  assert( header_data[2] == 0x02 ); // image type 0x02 is uncompressed true-color image
-  header_data[8];header_data[9];
+  struct Header header = { 0 };
+  const uint8_t header_size = sizeof(struct Header);
+  assert(header_size == HEADER_SIZE);
+  fread(&header,header_size,1,fptr);
+  assert( header.image_type == 0x02 ); // image type 0x02 is uncompressed true-color image
+
   //todo: find width and height of the image.
   //      get pixels, width x height
   //end reading header  
