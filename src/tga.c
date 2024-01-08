@@ -1,3 +1,6 @@
+ //TGA spec: https://en.wikipedia.org/wiki/Truevision_TGA
+//TGA importer
+
 #include <stdio.h>
 #include <assert.h>
 #include <stdint.h>
