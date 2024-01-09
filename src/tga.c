@@ -1,3 +1,6 @@
+//tga import and export
+//no rle compression support. just uncompressed one.
+//TGA spec: https://en.wikipedia.org/wiki/Truevision_TGA
 #include <stdio.h>
 #include <assert.h>
 #include <stdint.h>
@@ -59,7 +62,8 @@ struct TGAImage loadTGA(const char* filename){
   assert(header_size == HEADER_SIZE);
   fread(&header,header_size,1,fptr);
   assert( header.image_type == 0x02 ); // image type 0x02 is uncompressed true-color image
-
+  uint16_t width = header.image_spec.width;
+  uint16_t height = header.image_spec.height;
   //todo: find width and height of the image.
   //      get pixels, width x height
   //end reading header  
