@@ -33,15 +33,15 @@ struct Header {
   struct ImageSpec image_spec;
 };
 #pragma pack()
-struct TGAImage {
-  uint8_t dummy;
+struct TGAImage32x32 {
+  uint32_t pixel[32*32];
 };
 
 /* 
  * @brief it takes a tga filename as input   
  */
-struct TGAImage loadTGA(const char* filename){
-  printf("loading tga image file");
+struct TGAImage32x32 readTGA(const char* filename){
+  printf("loading tga image file\n");
 
   FILE* fptr = fopen(filename,"r");
   assert(fptr); // never trust input
@@ -64,10 +64,16 @@ struct TGAImage loadTGA(const char* filename){
   assert( header.image_type == 0x02 ); // image type 0x02 is uncompressed true-color image
   uint16_t width = header.image_spec.width;
   uint16_t height = header.image_spec.height;
+  printf("image width : %d\n",width);
+  printf("image height :%d\n",height);
+  uint8_t pixel_depth = header.image_spec.pixel_depth;
+  printf("pixel depth (bits per pixel): %d\n",pixel_depth);
+  struct TGAImage32x32 TGAImage;
+  fread(&TGAImage,sizeof(TGAImage),1,fptr);
   //todo: find width and height of the image.
   //      get pixels, width x height
   //end reading header  
-  struct TGAImage image;
   fclose(fptr);
-  return image;
+  return TGAImage;
 }
+
