@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdint.h>
+#include "memory_pool.c"
 
 #define HEADER_SIZE 18
 
@@ -13,8 +14,6 @@ struct ColorMapSpec {
   uint16_t color_map_length;
   uint8_t color_map_entry_size;
 };
-
-
 
 struct ImageSpec {
   uint16_t x;
@@ -33,14 +32,14 @@ struct Header {
   struct ImageSpec image_spec;
 };
 #pragma pack()
-struct TGAImage32x32 {
-  uint32_t pixel[32*32];
+struct TGAImage {
+  uint32_t* ptr_pixel;
 };
 
 /* 
  * @brief it takes a tga filename as input   
  */
-struct TGAImage32x32 readTGA(const char* filename){
+struct TGAImage readTGA(const char* filename){
   printf("loading tga image file\n");
 
   FILE* fptr = fopen(filename,"r");
@@ -68,8 +67,9 @@ struct TGAImage32x32 readTGA(const char* filename){
   printf("image height :%d\n",height);
   uint8_t pixel_depth = header.image_spec.pixel_depth;
   printf("pixel depth (bits per pixel): %d\n",pixel_depth);
-  struct TGAImage32x32 TGAImage;
-  fread(&TGAImage,sizeof(TGAImage),1,fptr);
+  struct TGAImage TGAImage = {0};
+  TGAImage.ptr_pixel = (uint32_t*)request_memory(width * height);
+  fread(TGAImage.ptr_pixel , width * height , 1 , fptr);
   //todo: find width and height of the image.
   //      get pixels, width x height
   //end reading header  
