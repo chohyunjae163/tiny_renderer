@@ -68,8 +68,9 @@ struct TGAImage readTGA(const char* filename){
   uint8_t pixel_depth = header.image_spec.pixel_depth;
   printf("pixel depth (bits per pixel): %d\n",pixel_depth);
   struct TGAImage TGAImage = {0};
-  TGAImage.ptr_pixel = (uint32_t*)request_memory(width * height);
-  fread(TGAImage.ptr_pixel , width * height , 1 , fptr);
+  const uint32_t memory_required = width * height * pixel_depth;
+  TGAImage.ptr_pixel = (uint32_t*)request_memory(memory_required);
+  fread(TGAImage.ptr_pixel , memory_required, 1 , fptr);
   //todo: find width and height of the image.
   //      get pixels, width x height
   //end reading header  
