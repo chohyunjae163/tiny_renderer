@@ -36,10 +36,37 @@ struct TGAImage {
   uint32_t* ptr_pixel;
 };
 
+enum EImageSizeType {
+  size_32x32 = 1,
+  size_64x64,
+  size_128x128,
+  size_256x256,
+  size_512x512,
+  size_1024x1024,
+  size_2048x2048,
+  size_4096x4096
+};
+
+static enum EImageSizeType get_image_size(uint16_t size){
+  uint8_t num_shift = 1;
+  while(size > 32){
+    size = size >> 1;
+    num_shift += 1;
+  }
+
+  return (enum EImageSizeType) num_shift;
+}
+//0000 0000
+//32x32,64x64,128x128,256x256,512x512,1024x1024,2048x2048,4096x4096
+//3 bits for size
+//4 bits for image IDs
+//1 bit for check bitsperpixel 32 bit 
+typedef uint8_t ImageHandle;
+
 /* 
  * @brief it takes a tga filename as input   
  */
-struct TGAImage readTGA(const char* filename){
+ImageHandle readTGA(const char* filename){
   printf("loading tga image file\n");
 
   FILE* fptr = fopen(filename,"r");
@@ -75,6 +102,8 @@ struct TGAImage readTGA(const char* filename){
   //      get pixels, width x height
   //end reading header  
   fclose(fptr);
-  return TGAImage;
+  ImageHandle handle;
+  handle |= pixel_depth == 32 ? 1 : 0;
+  return handle;
 }
 
