@@ -32,12 +32,9 @@ struct Header {
   struct ImageSpec image_spec;
 };
 #pragma pack()
-struct TGAImage {
-  uint32_t* ptr_pixel;
-};
 
 enum EImageSizeType {
-  size_32x32 = 1,
+  size_32x32 = 0,
   size_64x64,
   size_128x128,
   size_256x256,
@@ -49,24 +46,30 @@ enum EImageSizeType {
 
 static enum EImageSizeType get_image_size(uint16_t size){
   uint8_t num_shift = 1;
-  while(size > 32){
+  while(size > 32) {
     size = size >> 1;
     num_shift += 1;
   }
 
   return (enum EImageSizeType) num_shift;
 }
+
+#define NUM_IMAGE 16
+static uint32_t* raw_images[NUM_IMAGE];
+static uint8_t current_num_image = 0;
 //0000 0000
-//32x32,64x64,128x128,256x256,512x512,1024x1024,2048x2048,4096x4096
-//3 bits for size
 //4 bits for image IDs
-//1 bit for check bitsperpixel 32 bit 
+//3 bits for size
+//32x32,64x64,128x128,256x256,512x512,1024x1024,2048x2048,4096x4096
 typedef uint8_t ImageHandle;
 
 /* 
  * @brief it takes a tga filename as input   
  */
-ImageHandle readTGA(const char* filename){
+ImageHandle read_TGA(const char* filename){
+  if( current_num_image >= NUM_IMAGE ) {
+    return 0;
+  }
   printf("loading tga image file\n");
 
   FILE* fptr = fopen(filename,"r");
@@ -92,18 +95,30 @@ ImageHandle readTGA(const char* filename){
   uint16_t height = header.image_spec.height;
   printf("image width : %d\n",width);
   printf("image height :%d\n",height);
+  assert(width == height);
+
   uint8_t pixel_depth = header.image_spec.pixel_depth;
   printf("pixel depth (bits per pixel): %d\n",pixel_depth);
+  assert(pixel_depth == 32);
   struct TGAImage TGAImage = {0};
   const uint32_t memory_required = width * height * pixel_depth;
-  TGAImage.ptr_pixel = (uint32_t*)request_memory(memory_required);
+  raw_images[current_num_image++]= (uint32_t*)request_memory(memory_required);
   fread(TGAImage.ptr_pixel , memory_required, 1 , fptr);
   //todo: find width and height of the image.
   //      get pixels, width x height
   //end reading header  
+
   fclose(fptr);
   ImageHandle handle;
-  handle |= pixel_depth == 32 ? 1 : 0;
-  return handle;
-}
+  handle |= (pixel_depth == 32) ? 1 << 8 : 0; 
+  handle |= get_image_size(width) << 4;
+  handle |= current_num_image;
+  return handle; 
+}  
 
+uint32_t* get_raw_image(ImageHandle handle) {
+  //TODO: read image handle to get raw image ptr
+  //and return it
+  uint8_t index = handle & 0xF //"0x" tells the compiler that what follows is a hexadecimal number (base 16). 
+  return raw_images[index];
+}
