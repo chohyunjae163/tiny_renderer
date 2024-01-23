@@ -31,6 +31,7 @@ struct Header {
   struct ColorMapSpec color_map_spec;
   struct ImageSpec image_spec;
 };
+
 #pragma pack()
 
 enum EImageSizeType {
@@ -66,7 +67,7 @@ typedef uint8_t ImageHandle;
 /* 
  * @brief it takes a tga filename as input   
  */
-ImageHandle read_TGA(const char* filename){
+ImageHandle read_tga(const char* filename){
   if( current_num_image >= NUM_IMAGE ) {
     return 0;
   }
@@ -91,6 +92,7 @@ ImageHandle read_TGA(const char* filename){
   assert(header_size == HEADER_SIZE);
   fread(&header,header_size,1,fptr);
   assert( header.image_type == 0x02 ); // image type 0x02 is uncompressed true-color image
+
   uint16_t width = header.image_spec.width;
   uint16_t height = header.image_spec.height;
   printf("image width : %d\n",width);
@@ -100,10 +102,11 @@ ImageHandle read_TGA(const char* filename){
   uint8_t pixel_depth = header.image_spec.pixel_depth;
   printf("pixel depth (bits per pixel): %d\n",pixel_depth);
   assert(pixel_depth == 32);
-  struct TGAImage TGAImage = {0};
-  const uint32_t memory_required = width * height * pixel_depth;
-  raw_images[current_num_image++]= (uint32_t*)request_memory(memory_required);
-  fread(TGAImage.ptr_pixel , memory_required, 1 , fptr);
+
+  const uint32_t memory_required = width * height * pixel_depth / 4;
+  uint32_t* image_ptr = (uint32_t*)request_memory(memory_required);
+  raw_images[current_num_image++] = image_ptr;
+  fread(image_ptr, memory_required, 1 , fptr);
   //todo: find width and height of the image.
   //      get pixels, width x height
   //end reading header  
@@ -119,6 +122,30 @@ ImageHandle read_TGA(const char* filename){
 uint32_t* get_raw_image(ImageHandle handle) {
   //TODO: read image handle to get raw image ptr
   //and return it
-  uint8_t index = handle & 0xF //"0x" tells the compiler that what follows is a hexadecimal number (base 16). 
+  uint8_t index = handle & 0xF; //"0x" tells the compiler that what follows is a hexadecimal number (base 16). 
   return raw_images[index];
+}
+
+
+// need pixel data,size,
+int8_t write_tga(const char* filepath, uint16_t size,uint8_t* colours_ptr) {
+  FILE* fptr = fopen(filepath,"w");
+  if(fptr == NULL) {
+    printf("failed opening a filepath");
+    return -1;
+  }
+
+  struct Header header = {0};
+  header.image_spec.width = size;
+  header.image_spec.height = size;
+  header.image_spec.pixel_depth = 32;
+
+  //write header
+  fwrite(&header,sizeof(struct Header),1,fptr);
+
+  //write color data
+  fwrite(&colours_ptr,sizeof(size * size * 4),1,fptr);
+  fclose(fptr);
+
+  return 0;
 }
