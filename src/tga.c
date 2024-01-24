@@ -136,16 +136,19 @@ int8_t write_tga(const char* filepath, uint16_t size,uint8_t* colours_ptr) {
   }
 
   struct Header header = {0};
+  header.image_type = 0x02;
   header.image_spec.width = size;
   header.image_spec.height = size;
   header.image_spec.pixel_depth = 32;
 
   //write header
-  fwrite(&header,sizeof(struct Header),1,fptr);
+  size_t header_ret = fwrite(&header,sizeof(struct Header),1,fptr);
+  assert(header_ret == 1);
 
   //write color data
-  fwrite(&colours_ptr,sizeof(size * size * 4),1,fptr);
+  size_t color_data_size = size * size * 4;
+  size_t color_ret = fwrite(&colours_ptr,color_data_size,1,fptr);
+  assert(color_ret == 1);
   fclose(fptr);
 
   return 0;
-}
