@@ -128,8 +128,8 @@ uint32_t* get_raw_image(ImageHandle handle) {
 
 
 // need pixel data,size,
-int8_t write_tga(const char* filepath, uint16_t size,uint8_t* colours_ptr) {
-  FILE* fptr = fopen(filepath,"w");
+int8_t write_tga(const char* filepath, uint16_t width,uint16_t height , unsigned int* colours_ptr) {
+  FILE* fptr = fopen(filepath,"wb");
   if(fptr == NULL) {
     printf("failed opening a filepath");
     return -1;
@@ -137,18 +137,20 @@ int8_t write_tga(const char* filepath, uint16_t size,uint8_t* colours_ptr) {
 
   struct Header header = {0};
   header.image_type = 0x02;
-  header.image_spec.width = size;
-  header.image_spec.height = size;
+  header.image_spec.width = width;
+  header.image_spec.height = height;
   header.image_spec.pixel_depth = 32;
-
+  long header_size = sizeof(struct Header);
   //write header
-  size_t header_ret = fwrite(&header,sizeof(struct Header),1,fptr);
+  size_t header_ret = fwrite(&header,header_size,1,fptr);
   assert(header_ret == 1);
-
+  long fptr_offset = ftell(fptr);
+  assert(fptr_offset == header_size);
   //write color data
-  size_t color_data_size = size * size * 4;
-  size_t color_ret = fwrite(&colours_ptr,color_data_size,1,fptr);
-  assert(color_ret == 1);
+  size_t num_pixels = width * height;
+  size_t color_ret = fwrite(colours_ptr,4,num_pixels,fptr);
+  assert(color_ret == num_pixels);
   fclose(fptr);
 
   return 0;
+}
