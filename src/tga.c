@@ -148,7 +148,8 @@ int8_t write_tga(const char* filepath, uint16_t width,uint16_t height , unsigned
   assert(fptr_offset == header_size);
   //write color data
   size_t num_pixels = width * height;
-  size_t color_ret = fwrite(colours_ptr,4,num_pixels,fptr);
+  size_t size_of_pixel = 32 / 8;
+  size_t color_ret = fwrite(colours_ptr,size_of_pixel,num_pixels,fptr);
   assert(color_ret == num_pixels);
   fclose(fptr);
 
